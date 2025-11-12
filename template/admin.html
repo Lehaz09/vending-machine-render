@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2>⚙️ Admin Panel</h2>
+        <p class="text-muted">Online MySQL Database | Big Data Tracking</p>
+        
+        <!-- Product Management -->
+        <div class="card mt-3">
+            <div class="card-header bg-primary text-white">
+                <h4>📦 Product Management</h4>
+            </div>
+            <div class="card-body">
+                <!-- Add New Product Form -->
+                <div class="mb-4 p-3 border rounded">
+                    <h5>➕ Add New Product</h5>
+                    <form method="POST" action="{{ url_for('add_product') }}" class="row g-3">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" name="new_name" placeholder="Product Name" required>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" name="new_type" required>
+                                <option value="cake">Cake</option>
+                                <option value="drink">Drink</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" step="0.01" class="form-control" name="new_price" placeholder="Price" required>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" class="form-control" name="new_quantity" placeholder="Quantity" required>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-success w-100">Add Product</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Products Table -->
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.id }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('update_product') }}" class="d-inline">
+                                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                                        <input type="text" class="form-control form-control-sm" name="name" value="{{ product.name }}" required>
+                                </td>
+                                <td>
+                                        <select class="form-control form-control-sm" name="type" required>
+                                            <option value="cake" {% if product.type == 'cake' %}selected{% endif %}>Cake</option>
+                                            <option value="drink" {% if product.type == 'drink' %}selected{% endif %}>Drink</option>
+                                        </select>
+                                </td>
+                                <td>
+                                        <input type="number" step="0.01" class="form-control form-control-sm" name="price" value="{{ "%.2f"|format(product.price) }}" required>
+                                </td>
+                                <td>
+                                        <input type="number" class="form-control form-control-sm" name="quantity" value="{{ product.quantity }}" required>
+                                </td>
+                                <td>
+                                        <button type="submit" class="btn btn-warning btn-sm">Update</button>
+                                    </form>
+                                    <a href="{{ url_for('delete_product', product_id=product.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this product?')">Delete</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction Logs -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h4>📊 Transaction Logs (Big Data Tracking)</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Total Inserted</th>
+                                <th>Change</th>
+                                <th>Products</th>
+                                <th>Inserted Notes</th>
+                                <th>Inserted Coins</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions %}
+                            <tr>
+                                <td>{{ transaction.id }}</td>
+                                <td>{{ transaction.date }}</td>
+                                <td>{{ transaction.time }}</td>
+                                <td class="text-success">Rs {{ "%.2f"|format(transaction.total_amount) }}</td>
+                                <td class="text-warning">Rs {{ "%.2f"|format(transaction.change_amount) }}</td>
+                                <td><small>{{ transaction.products_purchased or 'No products' }}</small></td>
+                                <td><small>{{ transaction.amount_inserted_notes }}</small></td>
+                                <td><small>{{ transaction.amount_inserted_coins }}</small></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center">No transactions yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
