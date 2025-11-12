@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Products Display -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4>🎂 Available Products</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 cakes-section">
+                        <h5>🍰 CAKES</h5>
+                        {% for cake in cakes %}
+                        <div class="product-card">
+                            <h6>{{ cake.name }}</h6>
+                            <p><strong>ID: {{ cake.id }}</strong></p>
+                            <p>Price: <span class="text-success">Rs {{ "%.2f"|format(cake.price) }}</span></p>
+                            <p>Quantity: {{ cake.quantity }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="col-md-6 drinks-section">
+                        <h5>🥤 SOFT DRINKS</h5>
+                        {% for drink in drinks %}
+                        <div class="product-card">
+                            <h6>{{ drink.name }}</h6>
+                            <p><strong>ID: {{ drink.id }}</strong></p>
+                            <p>Price: <span class="text-success">Rs {{ "%.2f"|format(drink.price) }}</span></p>
+                            <p>Quantity: {{ drink.quantity }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Money Insertion -->
+        <div class="card mt-3">
+            <div class="card-header bg-warning">
+                <h4>💰 Insert Money</h4>
+            </div>
+            <div class="card-body">
+                <h6>💵 Notes:</h6>
+                {% for note in notes %}
+                <button class="btn btn-warning money-btn" onclick="insertMoney({{ note }})">Rs {{ note }}</button>
+                {% endfor %}
+                
+                <h6 class="mt-3">🪙 Coins:</h6>
+                {% for coin in coins %}
+                <button class="btn btn-secondary money-btn" onclick="insertMoney({{ coin }})">Rs {{ "%.2f"|format(coin) }}</button>
+                {% endfor %}
+                
+                <div class="mt-3 p-3 bg-light rounded">
+                    <h3 id="insertedAmount" class="text-success">💰 Inserted: Rs {{ "%.2f"|format(inserted_money) }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- Purchase Section -->
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <h4>🛒 Make Purchase</h4>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label">Product ID</label>
+                        <input type="number" class="form-control" id="productId" placeholder="e.g., 1">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="quantity" placeholder="Qty" value="1" min="1">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">&nbsp;</label>
+                        <button class="btn btn-primary w-100" onclick="makePurchase()">🎯 Purchase</button>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <button class="btn btn-success w-100" onclick="continueShopping()">🔄 Continue Shopping</button>
+                    </div>
+                    <div class="col-md-6">
+                        <button class="btn btn-danger w-100" onclick="returnChange()">🚪 Exit & Return Change</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Log -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h4>📋 Transaction Log</h4>
+            </div>
+            <div class="card-body">
+                <div class="transaction-log" id="transactionLog">
+Transaction Log:
+==================
+Ready for transactions...
+                </div>
+            </div>
+        </div>
+        
+        <!-- Database Info -->
+        <div class="card mt-3">
+            <div class="card-header bg-secondary text-white">
+                <h6>🗃️ Database Status</h6>
+            </div>
+            <div class="card-body">
+                <p class="small">✅ Online MySQL Database</p>
+                <p class="small">📊 Big Data Logging Active</p>
+                <p class="small">🌐 Hosted on PythonAnywhere</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function insertMoney(amount) {
+    $.post('/insert_money', {amount: amount}, function(data) {
+        $('#insertedAmount').text('💰 Inserted: Rs ' + data.inserted_money.toFixed(2));
+        updateTransactionLog(data.message);
+    }).fail(function() {
+        alert('Error inserting money');
+    });
+}
+
+function makePurchase() {
+    const productId = $('#productId').val();
+    const quantity = $('#quantity').val();
+    
+    if (!productId) {
+        alert('Please enter a Product ID');
+        return;
+    }
+    
+    $.post('/purchase', {
+        product_id: productId,
+        quantity: quantity
+    }, function(data) {
+        if (data.error) {
+            alert('❌ Error: ' + data.error);
+        } else {
+            $('#insertedAmount').text('💰 Inserted: Rs ' + data.inserted_money.toFixed(2));
+            updateTransactionLog(data.success);
+        }
+    }).fail(function(xhr) {
+        alert('❌ Error: ' + JSON.parse(xhr.responseText).error);
+    });
+}
+
+function returnChange() {
+    $.post('/return_change', function(data) {
+        if (data.success) {
+            $('#insertedAmount').text('💰 Inserted: Rs ' + data.inserted_money.toFixed(2));
+            updateTransactionLog(data.success);
+            alert('💵 ' + data.success + '\n\n' + data.change_breakdown);
+        } else {
+            alert('✅ ' + data.info);
+        }
+    });
+}
+
+function continueShopping() {
+    $('#productId').val('');
+    $('#quantity').val('1');
+    updateTransactionLog('🔄 Continuing shopping...');
+}
+
+function updateTransactionLog(message) {
+    const log = $('#transactionLog');
+    const currentText = log.text();
+    const newEntry = '\n' + new Date().toLocaleTimeString() + ' - ' + message;
+    log.text(currentText + newEntry);
+    log.scrollTop(log[0].scrollHeight);
+}
+</script>
+{% endblock %}
